@@ -28,7 +28,7 @@ add_library(d3d8to9 SHARED
 
 # Include directories
 target_include_directories(d3d8to9 PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/source/Include
 )
 
 # Compiler definitions

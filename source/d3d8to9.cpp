@@ -170,16 +170,11 @@ extern "C" IDirect3D8 *WINAPI Direct3DCreate8(UINT SDKVersion)
 	    return nullptr;
 	}
 
-	// Function pointers to D3DX functions (declared earlier in the file)
-	extern PFN_D3DXAssembleShader pfnD3DXAssembleShader;
-	extern PFN_D3DXDisassembleShader pfnD3DXDisassembleShader;
-	extern PFN_D3DXLoadSurfaceFromSurface pfnD3DXLoadSurfaceFromSurface;
-
-	// Load D3DX if not already loaded
-	if (!pfnD3DXAssembleShader || !pfnD3DXDisassembleShader || !pfnD3DXLoadSurfaceFromSurface) {
+	// Function pointers to D3DX functions
+	if (!g_pfnD3DXAssembleShader || !g_pfnD3DXDisassembleShader || !g_pfnD3DXLoadSurfaceFromSurface) {
 	    const HMODULE module = LoadLibrary(TEXT("d3dx9_43.dll"));
 
-	    if (module) {
+	    if (module != nullptr) {
 	        g_pfnD3DXAssembleShader = reinterpret_cast<PFN_D3DXAssembleShader>(
 	            GetProcAddress(module, "D3DXAssembleShader"));
 	        g_pfnD3DXDisassembleShader = reinterpret_cast<PFN_D3DXDisassembleShader>(

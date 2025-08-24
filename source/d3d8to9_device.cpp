@@ -491,12 +491,12 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CopyRects(IDirect3DSurface8 *pSourceS
 		if (SourceDesc.Pool == D3DPOOL_MANAGED || DestinationDesc.Pool != D3DPOOL_DEFAULT)
 		{
 			hr = D3DERR_INVALIDCALL;
-			if (D3DXLoadSurfaceFromSurface != nullptr)
+			if (CustomD3DX::D3DXLoadSurfaceFromSurface != nullptr)
 			{
-				if (SUCCEEDED(D3DXLoadSurfaceFromSurface(pDestinationSurfaceImpl->GetProxyInterface(), nullptr, &DestinationRect, pSourceSurfaceImpl->GetProxyInterface(), nullptr, &SourceRect, CustomD3DX::D3DX_FILTER_NONE, 0)))
+				if (SUCCEEDED(CustomD3DX::D3DXLoadSurfaceFromSurface(pDestinationSurfaceImpl->GetProxyInterface(), nullptr, &DestinationRect, pSourceSurfaceImpl->GetProxyInterface(), nullptr, &SourceRect, CustomD3DX::D3DX_CUSTOM_FILTER_NONE, 0)))
 				{
 					// Explicitly call AddDirtyRect on the surface
-					void *pContainer = nullptr;
+					void* pContainer = nullptr;
 					if (SUCCEEDED(pDestinationSurfaceImpl->GetContainer(IID_IDirect3DTexture9, &pContainer)) && pContainer)
 					{
 						IDirect3DTexture9 *pTexture = (IDirect3DTexture9*)pContainer;
@@ -1333,11 +1333,11 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 			return D3DERR_INVALIDCALL;
 		}
 
-		ID3DXBuffer *Disassembly = nullptr, *Assembly = nullptr, *ErrorBuffer = nullptr;
+		CustomD3DX::ID3DXBuffer* Disassembly = nullptr, *Assembly = nullptr, *ErrorBuffer = nullptr;
 
-		if (D3DXDisassembleShader != nullptr)
+		if (CustomD3DX::D3DXDisassembleShader != nullptr)
 		{
-			hr = D3DXDisassembleShader(pFunction, FALSE, nullptr, &Disassembly);
+			hr = CustomD3DX::D3DXDisassembleShader(pFunction, FALSE, nullptr, &Disassembly);
 		}
 		else
 		{
@@ -1802,12 +1802,12 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 		return D3DERR_INVALIDCALL;
 	}
 
-	ID3DXBuffer *Disassembly = nullptr, *Assembly = nullptr, *ErrorBuffer = nullptr;
+	CustomD3DX::ID3DXBuffer* Disassembly = nullptr, *Assembly = nullptr, *ErrorBuffer = nullptr;
 
 	HRESULT hr = D3DERR_INVALIDCALL;
 
-	if (D3DXDisassembleShader != nullptr)
-		hr = D3DXDisassembleShader(pFunction, FALSE, nullptr, &Disassembly);
+	if (CustomD3DX::D3DXDisassembleShader != nullptr)
+		hr = CustomD3DX::D3DXDisassembleShader(pFunction, FALSE, nullptr, &Disassembly);
 
 	if (FAILED(hr))
 	{

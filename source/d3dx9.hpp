@@ -13,11 +13,11 @@
 namespace CustomD3DX {
 
 
-    constexpr DWORD D3DX_FILTER_NONE = 0x00000001;
-    constexpr DWORD D3DX_FILTER_POINT    = 0x00000002;
-    constexpr DWORD D3DX_FILTER_LINEAR   = 0x00000003;
-    constexpr DWORD D3DX_FILTER_TRIANGLE = 0x00000004;
-    constexpr DWORD D3DX_FILTER_BOX      = 0x00000005;
+    constexpr DWORD D3DX_CUSTOM_FILTER_NONE = 0x00000001;
+    constexpr DWORD D3DX_CUSTOM_FILTER_POINT    = 0x00000002;
+    constexpr DWORD D3DX_CUSTOM_FILTER_LINEAR   = 0x00000003;
+    constexpr DWORD D3DX_CUSTOM_FILTER_TRIANGLE = 0x00000004;
+    constexpr DWORD D3DX_CUSTOM_FILTER_BOX      = 0x00000005;
 
     // Macro flags for shader assembly
     constexpr DWORD D3DXASM_DEBUG = 0x0001;
