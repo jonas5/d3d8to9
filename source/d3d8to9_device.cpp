@@ -7,6 +7,11 @@
 #include "d3d8to9.hpp"
 #include <regex>
 #include <assert.h>
+#include "d3dx9_fnptrs.hpp"
+
+using namespace CustomD3DX;
+
+
 
 struct VertexShaderInfo
 {
@@ -488,7 +493,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CopyRects(IDirect3DSurface8 *pSourceS
 			hr = D3DERR_INVALIDCALL;
 			if (D3DXLoadSurfaceFromSurface != nullptr)
 			{
-				if (SUCCEEDED(D3DXLoadSurfaceFromSurface(pDestinationSurfaceImpl->GetProxyInterface(), nullptr, &DestinationRect, pSourceSurfaceImpl->GetProxyInterface(), nullptr, &SourceRect, D3DX_FILTER_NONE, 0)))
+				if (SUCCEEDED(D3DXLoadSurfaceFromSurface(pDestinationSurfaceImpl->GetProxyInterface(), nullptr, &DestinationRect, pSourceSurfaceImpl->GetProxyInterface(), nullptr, &SourceRect, CustomD3DX::D3DX_FILTER_NONE, 0)))
 				{
 					// Explicitly call AddDirtyRect on the surface
 					void *pContainer = nullptr;
@@ -1507,9 +1512,9 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 		LOG << "> Dumping translated shader assembly:" << std::endl << std::endl << SourceCode << std::endl;
 #endif
 
-		if (D3DXAssembleShader != nullptr)
+		if (CustomD3DX::D3DXAssembleShader != nullptr)
 		{
-			hr = D3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
+			hr = CustomD3DX::D3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
 		}
 		else
 		{
@@ -2130,10 +2135,10 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 		NewSourceCode.insert(PhasePosition, "    phase\n");
 
 		// If no errors were encountered then check if code assembles
-		if (!ConvertError && D3DXAssembleShader != nullptr)
+		if (!ConvertError && CustomD3DX::D3DXAssembleShader != nullptr)
 		{
 			// Test if ps_1_4 assembles
-			if (SUCCEEDED(D3DXAssembleShader(NewSourceCode.data(), static_cast<UINT>(NewSourceCode.size()), nullptr, nullptr, 0, &Assembly, &ErrorBuffer)))
+			if (SUCCEEDED(CustomD3DX::D3DXAssembleShader(NewSourceCode.data(), static_cast<UINT>(NewSourceCode.size()), nullptr, nullptr, 0, &Assembly, &ErrorBuffer)))
 			{
 				SourceCode = NewSourceCode;
 				Assembly->Release();
@@ -2176,9 +2181,9 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 	LOG << "> Dumping translated shader assembly:" << std::endl << std::endl << SourceCode << std::endl;
 #endif
 
-	if (D3DXAssembleShader != nullptr)
+	if (CustomD3DX::D3DXAssembleShader != nullptr)
 	{
-		hr = D3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
+		hr = CustomD3DX::D3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
 	}
 	else
 	{

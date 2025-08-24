@@ -3,12 +3,27 @@
  * License: https://github.com/crosire/d3d8to9#license
  */
 
-#include "d3dx9.hpp"
+
+#include <initguid.h>
+
+#include <d3d9.h>
+#include <d3dx9tex.h>
+#include <d3dx9shader.h>
+#include "d3dx9_fnptrs.hpp"
 #include "d3d8to9.hpp"
 
-PFN_D3DXAssembleShader D3DXAssembleShader = nullptr;
-PFN_D3DXDisassembleShader D3DXDisassembleShader = nullptr;
-PFN_D3DXLoadSurfaceFromSurface D3DXLoadSurfaceFromSurface = nullptr;
+
+// Function pointer typedefs
+typedef HRESULT(WINAPI* PFN_D3DXAssembleShader)(LPCSTR, UINT, const D3DXMACRO*, LPD3DXINCLUDE, DWORD, LPD3DXBUFFER*, LPD3DXBUFFER*);
+typedef HRESULT(WINAPI* PFN_D3DXDisassembleShader)(const DWORD*, BOOL, LPCSTR, LPD3DXBUFFER*);
+typedef HRESULT(WINAPI* PFN_D3DXLoadSurfaceFromSurface)(LPDIRECT3DSURFACE9, const PALETTEENTRY*, const RECT*, LPDIRECT3DSURFACE9, const PALETTEENTRY*, const RECT*, DWORD, D3DCOLOR);
+
+// Renamed global pointers to avoid conflict with system functions
+PFN_D3DXAssembleShader g_pfnD3DXAssembleShader = nullptr;
+PFN_D3DXDisassembleShader g_pfnD3DXDisassembleShader = nullptr;
+PFN_D3DXLoadSurfaceFromSurface g_pfnD3DXLoadSurfaceFromSurface = nullptr;
+
+
 
 #ifndef D3D8TO9NOLOG
  // Very simple logging for the purpose of debugging only.
@@ -149,40 +164,47 @@ extern "C" IDirect3D8 *WINAPI Direct3DCreate8(UINT SDKVersion)
 	LOG << "> Passing on to 'Direct3DCreate9':" << std::endl;
 #endif
 
-	IDirect3D9 *const d3d = Direct3DCreate9(D3D_SDK_VERSION);
+	IDirect3D9* const d3d = Direct3DCreate9(D3D_SDK_VERSION);
 
-	if (d3d == nullptr)
-	{
-		return nullptr;
+	if (d3d == nullptr) {
+	    return nullptr;
 	}
 
-	// Load D3DX
-	if (!D3DXAssembleShader || !D3DXDisassembleShader || !D3DXLoadSurfaceFromSurface)
-	{
-		const HMODULE module = LoadLibrary(TEXT("d3dx9_43.dll"));
+	// Function pointers to D3DX functions (declared earlier in the file)
+	extern PFN_D3DXAssembleShader pfnD3DXAssembleShader;
+	extern PFN_D3DXDisassembleShader pfnD3DXDisassembleShader;
+	extern PFN_D3DXLoadSurfaceFromSurface pfnD3DXLoadSurfaceFromSurface;
 
-		if (module != nullptr)
-		{
-			D3DXAssembleShader = reinterpret_cast<PFN_D3DXAssembleShader>(GetProcAddress(module, "D3DXAssembleShader"));
-			D3DXDisassembleShader = reinterpret_cast<PFN_D3DXDisassembleShader>(GetProcAddress(module, "D3DXDisassembleShader"));
-			D3DXLoadSurfaceFromSurface = reinterpret_cast<PFN_D3DXLoadSurfaceFromSurface>(GetProcAddress(module, "D3DXLoadSurfaceFromSurface"));
-		}
-		else
-		{
-#ifndef D3D8TO9NOLOG
-			LOG << "Failed to load d3dx9_43.dll! Some features will not work correctly." << std::endl;
-#endif
-			if (MessageBox(nullptr, TEXT(
-					"Failed to load d3dx9_43.dll! Some features will not work correctly.\n\n"
-					"It's required to install the \"Microsoft DirectX End-User Runtime\" in order to use d3d8to9, or alternatively get the DLLs from this NuGet package:\nhttps://www.nuget.org/packages/Microsoft.DXSDK.D3DX\n\n"
-					"Please click \"OK\" to open the official download page or \"Cancel\" to continue anyway."), nullptr, MB_ICONWARNING | MB_TOPMOST | MB_SETFOREGROUND | MB_OKCANCEL | MB_DEFBUTTON1) == IDOK)
-			{
-				ShellExecute(nullptr, TEXT("open"), TEXT("https://www.microsoft.com/download/details.aspx?id=35"), nullptr, nullptr, SW_SHOW);
+	// Load D3DX if not already loaded
+	if (!pfnD3DXAssembleShader || !pfnD3DXDisassembleShader || !pfnD3DXLoadSurfaceFromSurface) {
+	    const HMODULE module = LoadLibrary(TEXT("d3dx9_43.dll"));
 
-				return nullptr;
-			}
-		}
+	    if (module) {
+	        g_pfnD3DXAssembleShader = reinterpret_cast<PFN_D3DXAssembleShader>(
+	            GetProcAddress(module, "D3DXAssembleShader"));
+	        g_pfnD3DXDisassembleShader = reinterpret_cast<PFN_D3DXDisassembleShader>(
+	            GetProcAddress(module, "D3DXDisassembleShader"));
+	        g_pfnD3DXLoadSurfaceFromSurface = reinterpret_cast<PFN_D3DXLoadSurfaceFromSurface>(
+	            GetProcAddress(module, "D3DXLoadSurfaceFromSurface"));
+	    } else {
+	#ifndef D3D8TO9NOLOG
+	        LOG << "Failed to load d3dx9_43.dll! Some features will not work correctly." << std::endl;
+	#endif
+	        if (MessageBox(nullptr, TEXT(
+	                "Failed to load d3dx9_43.dll! Some features will not work correctly.\n\n"
+	                "It's required to install the \"Microsoft DirectX End-User Runtime\" in order to use d3d8to9, or alternatively get the DLLs from this NuGet package:\nhttps://www.nuget.org/packages/Microsoft.DirectX\n\n"
+	                "Please click \"OK\" to open the official download page or \"Cancel\" to continue anyway."),
+	            nullptr, MB_ICONWARNING | MB_TOPMOST | MB_SETFOREGROUND | MB_OKCANCEL) == IDOK) {
+	            ShellExecute(nullptr, TEXT("open"),
+	                         TEXT("https://www.microsoft.com/download/details.aspx?id=35"),
+	                         nullptr, nullptr, SW_SHOW);
+	            return nullptr;
+	        }
+	    }
 	}
 
 	return new Direct3D8(d3d);
+
+
+
 }
