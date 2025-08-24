@@ -239,9 +239,16 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE UnlockRect(UINT Level) override;
 	virtual HRESULT STDMETHODCALLTYPE AddDirtyRect(const RECT *pDirtyRect) override;
 
+	// AddressLookupTableObject methods
+	virtual void PreReset() override;
+	virtual void PostReset() override;
+
 private:
 	Direct3DDevice8 *const Device;
-	IDirect3DTexture9 *const ProxyInterface;
+	IDirect3DTexture9 *ProxyInterface;
+
+	D3DSURFACE_DESC8 Desc;
+	UINT Levels;
 };
 class Direct3DCubeTexture8 : public IDirect3DCubeTexture8, public AddressLookupTableObject
 {
@@ -277,9 +284,16 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE UnlockRect(D3DCUBEMAP_FACES FaceType, UINT Level) override;
 	virtual HRESULT STDMETHODCALLTYPE AddDirtyRect(D3DCUBEMAP_FACES FaceType, const RECT *pDirtyRect) override;
 
+	// AddressLookupTableObject methods
+	virtual void PreReset() override;
+	virtual void PostReset() override;
+
 private:
 	Direct3DDevice8 *const Device;
-	IDirect3DCubeTexture9 *const ProxyInterface;
+	IDirect3DCubeTexture9 *ProxyInterface;
+
+	D3DSURFACE_DESC8 Desc;
+	UINT Levels;
 };
 class Direct3DVolumeTexture8 : public IDirect3DVolumeTexture8, public AddressLookupTableObject
 {
@@ -315,9 +329,16 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE UnlockBox(UINT Level) override;
 	virtual HRESULT STDMETHODCALLTYPE AddDirtyBox(const D3DBOX *pDirtyBox) override;
 
+	// AddressLookupTableObject methods
+	virtual void PreReset() override;
+	virtual void PostReset() override;
+
 private:
 	Direct3DDevice8 *const Device;
-	IDirect3DVolumeTexture9 *const ProxyInterface;
+	IDirect3DVolumeTexture9 *ProxyInterface;
+
+	D3DVOLUME_DESC8 Desc;
+	UINT Levels;
 };
 
 class Direct3DSurface8 : public IDirect3DSurface8, public AddressLookupTableObject
@@ -344,9 +365,15 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE LockRect(D3DLOCKED_RECT *pLockedRect, const RECT *pRect, DWORD Flags) override;
 	virtual HRESULT STDMETHODCALLTYPE UnlockRect() override;
 
+	// AddressLookupTableObject methods
+	virtual void PreReset() override;
+	virtual void PostReset() override;
+
 private:
 	Direct3DDevice8 *const Device;
-	IDirect3DSurface9 *const ProxyInterface;
+	IDirect3DSurface9 *ProxyInterface;
+
+	D3DSURFACE_DESC8 Desc;
 };
 
 class Direct3DVolume8 : public IDirect3DVolume8, public AddressLookupTableObject
@@ -406,9 +433,15 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE Unlock() override;
 	virtual HRESULT STDMETHODCALLTYPE GetDesc(D3DVERTEXBUFFER_DESC *pDesc) override;
 
+	// AddressLookupTableObject methods
+	virtual void PreReset() override;
+	virtual void PostReset() override;
+
 private:
 	Direct3DDevice8 *const Device;
-	IDirect3DVertexBuffer9 *const ProxyInterface;
+	IDirect3DVertexBuffer9 *ProxyInterface;
+
+	D3DVERTEXBUFFER_DESC Desc;
 };
 
 class Direct3DIndexBuffer8 : public IDirect3DIndexBuffer8, public AddressLookupTableObject
@@ -439,9 +472,15 @@ public:
 	virtual HRESULT STDMETHODCALLTYPE Unlock() override;
 	virtual HRESULT STDMETHODCALLTYPE GetDesc(D3DINDEXBUFFER_DESC *pDesc) override;
 
+	// AddressLookupTableObject methods
+	virtual void PreReset() override;
+	virtual void PostReset() override;
+
 private:
 	Direct3DDevice8 *const Device;
-	IDirect3DIndexBuffer9 *const ProxyInterface;
+	IDirect3DIndexBuffer9 *ProxyInterface;
+
+	D3DINDEXBUFFER_DESC Desc;
 };
 
 #include <fstream>

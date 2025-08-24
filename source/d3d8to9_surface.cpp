@@ -9,9 +9,42 @@ Direct3DSurface8::Direct3DSurface8(Direct3DDevice8 *Device, IDirect3DSurface9 *P
 	Device(Device), ProxyInterface(ProxyInterface)
 {
 	Device->ProxyAddressLookupTable->SaveAddress(this, ProxyInterface);
+	GetDesc(&Desc);
 }
 Direct3DSurface8::~Direct3DSurface8()
 {
+}
+
+void Direct3DSurface8::PreReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT)
+	{
+		IUnknown *pContainer = nullptr;
+		if (ProxyInterface && FAILED(ProxyInterface->GetContainer(IID_IUnknown, (void**)&pContainer)))
+		{
+			ProxyInterface->Release();
+			ProxyInterface = nullptr;
+		}
+		if (pContainer)
+		{
+			pContainer->Release();
+		}
+	}
+}
+
+void Direct3DSurface8::PostReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT && ProxyInterface == nullptr)
+	{
+		if (Desc.Usage & D3DUSAGE_RENDERTARGET)
+		{
+			Device->GetProxyInterface()->CreateRenderTarget(Desc.Width, Desc.Height, Desc.Format, Desc.MultiSampleType, 0, FALSE, &ProxyInterface, nullptr);
+		}
+		else if (Desc.Usage & D3DUSAGE_DEPTHSTENCIL)
+		{
+			Device->GetProxyInterface()->CreateDepthStencilSurface(Desc.Width, Desc.Height, Desc.Format, Desc.MultiSampleType, 0, TRUE, &ProxyInterface, nullptr);
+		}
+	}
 }
 
 HRESULT STDMETHODCALLTYPE Direct3DSurface8::QueryInterface(REFIID riid, void **ppvObj)

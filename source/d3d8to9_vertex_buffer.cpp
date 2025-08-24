@@ -9,9 +9,30 @@ Direct3DVertexBuffer8::Direct3DVertexBuffer8(Direct3DDevice8 *Device, IDirect3DV
 	Device(Device), ProxyInterface(ProxyInterface)
 {
 	Device->ProxyAddressLookupTable->SaveAddress(this, ProxyInterface);
+	GetDesc(&Desc);
 }
 Direct3DVertexBuffer8::~Direct3DVertexBuffer8()
 {
+}
+
+void Direct3DVertexBuffer8::PreReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT)
+	{
+		if (ProxyInterface)
+		{
+			ProxyInterface->Release();
+			ProxyInterface = nullptr;
+		}
+	}
+}
+
+void Direct3DVertexBuffer8::PostReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT)
+	{
+		Device->GetProxyInterface()->CreateVertexBuffer(Desc.Size, Desc.Usage, Desc.FVF, Desc.Pool, &ProxyInterface, nullptr);
+	}
 }
 
 HRESULT STDMETHODCALLTYPE Direct3DVertexBuffer8::QueryInterface(REFIID riid, void **ppvObj)

@@ -9,9 +9,31 @@ Direct3DTexture8::Direct3DTexture8(Direct3DDevice8 *Device, IDirect3DTexture9 *P
 	Device(Device), ProxyInterface(ProxyInterface)
 {
 	Device->ProxyAddressLookupTable->SaveAddress(this, ProxyInterface);
+	GetLevelDesc(0, &Desc);
+	Levels = GetLevelCount();
 }
 Direct3DTexture8::~Direct3DTexture8()
 {
+}
+
+void Direct3DTexture8::PreReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT)
+	{
+		if (ProxyInterface)
+		{
+			ProxyInterface->Release();
+			ProxyInterface = nullptr;
+		}
+	}
+}
+
+void Direct3DTexture8::PostReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT)
+	{
+		Device->GetProxyInterface()->CreateTexture(Desc.Width, Desc.Height, Levels, Desc.Usage, Desc.Format, Desc.Pool, &ProxyInterface, nullptr);
+	}
 }
 
 HRESULT STDMETHODCALLTYPE Direct3DTexture8::QueryInterface(REFIID riid, void **ppvObj)
@@ -147,9 +169,31 @@ Direct3DCubeTexture8::Direct3DCubeTexture8(Direct3DDevice8 *device, IDirect3DCub
 	ProxyInterface(ProxyInterface)
 {
 	Device->ProxyAddressLookupTable->SaveAddress(this, ProxyInterface);
+	GetLevelDesc(0, &Desc);
+	Levels = GetLevelCount();
 }
 Direct3DCubeTexture8::~Direct3DCubeTexture8()
 {
+}
+
+void Direct3DCubeTexture8::PreReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT)
+	{
+		if (ProxyInterface)
+		{
+			ProxyInterface->Release();
+			ProxyInterface = nullptr;
+		}
+	}
+}
+
+void Direct3DCubeTexture8::PostReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT)
+	{
+		Device->GetProxyInterface()->CreateCubeTexture(Desc.Width, Levels, Desc.Usage, Desc.Format, Desc.Pool, &ProxyInterface, nullptr);
+	}
 }
 
 HRESULT STDMETHODCALLTYPE Direct3DCubeTexture8::QueryInterface(REFIID riid, void **ppvObj)
@@ -285,9 +329,31 @@ Direct3DVolumeTexture8::Direct3DVolumeTexture8(Direct3DDevice8 *device, IDirect3
 	ProxyInterface(ProxyInterface)
 {
 	Device->ProxyAddressLookupTable->SaveAddress(this, ProxyInterface);
+	GetLevelDesc(0, &Desc);
+	Levels = GetLevelCount();
 }
 Direct3DVolumeTexture8::~Direct3DVolumeTexture8()
 {
+}
+
+void Direct3DVolumeTexture8::PreReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT)
+	{
+		if (ProxyInterface)
+		{
+			ProxyInterface->Release();
+			ProxyInterface = nullptr;
+		}
+	}
+}
+
+void Direct3DVolumeTexture8::PostReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT)
+	{
+		Device->GetProxyInterface()->CreateVolumeTexture(Desc.Width, Desc.Height, Desc.Depth, Levels, Desc.Usage, Desc.Format, Desc.Pool, &ProxyInterface, nullptr);
+	}
 }
 
 HRESULT STDMETHODCALLTYPE Direct3DVolumeTexture8::QueryInterface(REFIID riid, void **ppvObj)

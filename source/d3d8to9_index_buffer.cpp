@@ -9,9 +9,30 @@ Direct3DIndexBuffer8::Direct3DIndexBuffer8(Direct3DDevice8 *Device, IDirect3DInd
 	Device(Device), ProxyInterface(ProxyInterface)
 {
 	Device->ProxyAddressLookupTable->SaveAddress(this, ProxyInterface);
+	GetDesc(&Desc);
 }
 Direct3DIndexBuffer8::~Direct3DIndexBuffer8()
 {
+}
+
+void Direct3DIndexBuffer8::PreReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT)
+	{
+		if (ProxyInterface)
+		{
+			ProxyInterface->Release();
+			ProxyInterface = nullptr;
+		}
+	}
+}
+
+void Direct3DIndexBuffer8::PostReset()
+{
+	if (Desc.Pool == D3DPOOL_DEFAULT)
+	{
+		Device->GetProxyInterface()->CreateIndexBuffer(Desc.Size, Desc.Usage, Desc.Format, Desc.Pool, &ProxyInterface, nullptr);
+	}
 }
 
 HRESULT STDMETHODCALLTYPE Direct3DIndexBuffer8::QueryInterface(REFIID riid, void **ppvObj)

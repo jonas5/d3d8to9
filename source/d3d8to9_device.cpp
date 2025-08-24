@@ -224,6 +224,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::Reset(D3DPRESENT_PARAMETERS8 *pPresen
 #ifndef D3D8TO9NOLOG
 		GetLogStream() << "  > Device is ready to be reset. Releasing shaders and stateblocks..." << std::endl;
 #endif
+		ProxyAddressLookupTable->PreReset();
 		ReleaseShadersAndStateBlocks();
 	}
 
@@ -253,6 +254,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::Reset(D3DPRESENT_PARAMETERS8 *pPresen
 
 	if (SUCCEEDED(hr))
 	{
+		ProxyAddressLookupTable->PostReset();
 		// The default value of D3DRS_POINTSIZE_MIN is 0.0f in D3D8,
 		// whereas in D3D9 it is 1.0f, so adjust it as needed
 		ProxyInterface->SetRenderState(D3DRS_POINTSIZE_MIN, (DWORD) 0.0f);
