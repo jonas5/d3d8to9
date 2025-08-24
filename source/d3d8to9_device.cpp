@@ -192,6 +192,25 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::Reset(D3DPRESENT_PARAMETERS8 *pPresen
 	if (pPresentationParameters == nullptr)
 		return D3DERR_INVALIDCALL;
 
+	// Check the device state.
+	HRESULT deviceState = ProxyInterface->TestCooperativeLevel();
+
+	// If the device is lost, wait until it is ready to be reset
+	if (deviceState == D3DERR_DEVICELOST)
+	{
+#ifndef D3D8TO9NOLOG
+		GetLogStream() << "  > Device is lost. Waiting for it to become available..." << std::endl;
+#endif
+		while ((deviceState = ProxyInterface->TestCooperativeLevel()) == D3DERR_DEVICELOST)
+		{
+			Sleep(100); // Wait a bit
+		}
+#ifndef D3D8TO9NOLOG
+		GetLogStream() << "  > Device is now available (" << std::hex << deviceState << std::dec << "). Proceeding with reset." << std::endl;
+#endif
+	}
+
+	// Release resources before reset
 	ProxyInterface->SetDepthStencilSurface(nullptr);
 
 	if (pCurrentRenderTarget != nullptr)
@@ -200,10 +219,11 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::Reset(D3DPRESENT_PARAMETERS8 *pPresen
 		pCurrentRenderTarget = nullptr;
 	}
 
-	const HRESULT deviceState = ProxyInterface->TestCooperativeLevel();
-
 	if (deviceState == D3DERR_DEVICENOTRESET)
 	{
+#ifndef D3D8TO9NOLOG
+		GetLogStream() << "  > Device is ready to be reset. Releasing shaders and stateblocks..." << std::endl;
+#endif
 		ReleaseShadersAndStateBlocks();
 	}
 
@@ -211,6 +231,17 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::Reset(D3DPRESENT_PARAMETERS8 *pPresen
 	ConvertPresentParameters(*pPresentationParameters, PresentParams);
 
 	const HRESULT hr = ProxyInterface->Reset(&PresentParams);
+
+#ifndef D3D8TO9NOLOG
+	if (SUCCEEDED(hr))
+	{
+		GetLogStream() << "  > Reset successful." << std::endl;
+	}
+	else
+	{
+		GetLogStream() << "  > Reset failed with error code " << std::hex << hr << std::dec << "!" << std::endl;
+	}
+#endif
 
 	if (SUCCEEDED(hr))
 	{
