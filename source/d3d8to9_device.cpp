@@ -188,16 +188,17 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::Reset(D3DPRESENT_PARAMETERS8 *pPresen
 	if (pPresentationParameters == nullptr)
 		return D3DERR_INVALIDCALL;
 
-	pCurrentRenderTarget = nullptr;
+	if (pCurrentRenderTarget != nullptr)
+	{
+		pCurrentRenderTarget->Release();
+		pCurrentRenderTarget = nullptr;
+	}
 
 	const HRESULT deviceState = ProxyInterface->TestCooperativeLevel();
 
-	if (deviceState == D3DERR_DEVICENOTRESET) {
-		while (!StateBlockTokens.empty())
-		{
-			DWORD Token = *StateBlockTokens.begin();
-			DeleteStateBlock(Token);
-		}
+	if (deviceState == D3DERR_DEVICENOTRESET)
+	{
+		ReleaseShadersAndStateBlocks();
 	}
 
 	D3DPRESENT_PARAMETERS PresentParams;
