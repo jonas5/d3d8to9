@@ -227,6 +227,14 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::Reset(D3DPRESENT_PARAMETERS8 *pPresen
 		ReleaseShadersAndStateBlocks();
 	}
 
+#ifndef D3D8TO9NOLOG
+	GetLogStream() << "  > Unbinding all resources before reset..." << std::endl;
+#endif
+	ProxyInterface->SetStreamSource(0, nullptr, 0, 0);
+	ProxyInterface->SetIndices(nullptr);
+	ProxyInterface->SetVertexShader(nullptr);
+	ProxyInterface->SetPixelShader(nullptr);
+
 	D3DPRESENT_PARAMETERS PresentParams;
 	ConvertPresentParameters(*pPresentationParameters, PresentParams);
 

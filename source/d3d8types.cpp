@@ -186,6 +186,13 @@ void ConvertPresentParameters(D3DPRESENT_PARAMETERS8 &Input, D3DPRESENT_PARAMETE
 			}
 		}
 	}
+
+	// This is needed for some games that are not resetting the device correctly.
+	if (Output.Windowed)
+	{
+		Output.BackBufferWidth = 0;
+		Output.BackBufferHeight = 0;
+	}
 }
 
 void ConvertAdapterIdentifier(D3DADAPTER_IDENTIFIER9 &Input, D3DADAPTER_IDENTIFIER8 &Output)
