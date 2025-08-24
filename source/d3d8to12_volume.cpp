@@ -3,12 +3,12 @@
  * License: https://github.com/crosire/d3d8to9#license
  */
 
-#include "d3d8to9.hpp"
+#include "d3d8to12.hpp"
+#include "d3d8to12_device.hpp"
 
-Direct3DVolume8::Direct3DVolume8(Direct3DDevice8 *Device, IDirect3DVolume9 *ProxyInterface) :
+Direct3DVolume8::Direct3DVolume8(Direct3DDevice8 *Device, ID3D12Resource *ProxyInterface) :
 	Device(Device), ProxyInterface(ProxyInterface)
 {
-	Device->ProxyAddressLookupTable->SaveAddress(this, ProxyInterface);
 }
 Direct3DVolume8::~Direct3DVolume8()
 {
@@ -28,11 +28,7 @@ HRESULT STDMETHODCALLTYPE Direct3DVolume8::QueryInterface(REFIID riid, void **pp
 		return S_OK;
 	}
 
-	const HRESULT hr = ProxyInterface->QueryInterface(ConvertREFIID(riid), ppvObj);
-	if (SUCCEEDED(hr))
-		GenericQueryInterface(riid, ppvObj, Device);
-
-	return hr;
+	return ProxyInterface->QueryInterface(riid, ppvObj);
 }
 ULONG STDMETHODCALLTYPE Direct3DVolume8::AddRef()
 {
@@ -55,44 +51,33 @@ HRESULT STDMETHODCALLTYPE Direct3DVolume8::GetDevice(IDirect3DDevice8 **ppDevice
 }
 HRESULT STDMETHODCALLTYPE Direct3DVolume8::SetPrivateData(REFGUID refguid, const void *pData, DWORD SizeOfData, DWORD Flags)
 {
-	return ProxyInterface->SetPrivateData(refguid, pData, SizeOfData, Flags);
+	return ProxyInterface->SetPrivateData(refguid, SizeOfData, pData);
 }
 HRESULT STDMETHODCALLTYPE Direct3DVolume8::GetPrivateData(REFGUID refguid, void *pData, DWORD *pSizeOfData)
 {
-	return ProxyInterface->GetPrivateData(refguid, pData, pSizeOfData);
+	return ProxyInterface->GetPrivateData(refguid, pSizeOfData, pData);
 }
 HRESULT STDMETHODCALLTYPE Direct3DVolume8::FreePrivateData(REFGUID refguid)
 {
-	return ProxyInterface->FreePrivateData(refguid);
+	return ProxyInterface->SetPrivateData(refguid, 0, nullptr);
 }
 HRESULT STDMETHODCALLTYPE Direct3DVolume8::GetContainer(REFIID riid, void **ppContainer)
 {
-	const HRESULT hr = ProxyInterface->GetContainer(ConvertREFIID(riid), ppContainer);
-	if (SUCCEEDED(hr))
-		GenericQueryInterface(riid, ppContainer, Device);
-
-	return hr;
+	// TODO: Implement
+	return E_NOTIMPL;
 }
 HRESULT STDMETHODCALLTYPE Direct3DVolume8::GetDesc(D3DVOLUME_DESC8 *pDesc)
 {
-	if (pDesc == nullptr)
-		return D3DERR_INVALIDCALL;
-
-	D3DVOLUME_DESC VolumeDesc;
-
-	const HRESULT hr = ProxyInterface->GetDesc(&VolumeDesc);
-	if (FAILED(hr))
-		return hr;
-
-	ConvertVolumeDesc(VolumeDesc, *pDesc);
-
-	return D3D_OK;
+	// TODO: Implement
+	return E_NOTIMPL;
 }
 HRESULT STDMETHODCALLTYPE Direct3DVolume8::LockBox(D3DLOCKED_BOX *pLockedVolume, const D3DBOX *pBox, DWORD Flags)
 {
-	return ProxyInterface->LockBox(pLockedVolume, pBox, Flags);
+	// TODO: Implement
+	return E_NOTIMPL;
 }
 HRESULT STDMETHODCALLTYPE Direct3DVolume8::UnlockBox()
 {
-	return ProxyInterface->UnlockBox();
+	// TODO: Implement
+	return E_NOTIMPL;
 }

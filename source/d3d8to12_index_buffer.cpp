@@ -3,12 +3,12 @@
  * License: https://github.com/crosire/d3d8to9#license
  */
 
-#include "d3d8to9.hpp"
+#include "d3d8to12.hpp"
+#include "d3d8to12_device.hpp"
 
-Direct3DIndexBuffer8::Direct3DIndexBuffer8(Direct3DDevice8 *Device, IDirect3DIndexBuffer9 *ProxyInterface) :
+Direct3DIndexBuffer8::Direct3DIndexBuffer8(Direct3DDevice8 *Device, ID3D12Resource *ProxyInterface) :
 	Device(Device), ProxyInterface(ProxyInterface)
 {
-	Device->ProxyAddressLookupTable->SaveAddress(this, ProxyInterface);
 }
 Direct3DIndexBuffer8::~Direct3DIndexBuffer8()
 {
@@ -29,11 +29,7 @@ HRESULT STDMETHODCALLTYPE Direct3DIndexBuffer8::QueryInterface(REFIID riid, void
 		return S_OK;
 	}
 
-	const HRESULT hr = ProxyInterface->QueryInterface(ConvertREFIID(riid), ppvObj);
-	if (SUCCEEDED(hr))
-		GenericQueryInterface(riid, ppvObj, Device);
-
-	return hr;
+	return ProxyInterface->QueryInterface(riid, ppvObj);
 }
 ULONG STDMETHODCALLTYPE Direct3DIndexBuffer8::AddRef()
 {
@@ -56,27 +52,29 @@ HRESULT STDMETHODCALLTYPE Direct3DIndexBuffer8::GetDevice(IDirect3DDevice8 **ppD
 }
 HRESULT STDMETHODCALLTYPE Direct3DIndexBuffer8::SetPrivateData(REFGUID refguid, const void *pData, DWORD SizeOfData, DWORD Flags)
 {
-	return ProxyInterface->SetPrivateData(refguid, pData, SizeOfData, Flags);
+	return ProxyInterface->SetPrivateData(refguid, SizeOfData, pData);
 }
 HRESULT STDMETHODCALLTYPE Direct3DIndexBuffer8::GetPrivateData(REFGUID refguid, void *pData, DWORD *pSizeOfData)
 {
-	return ProxyInterface->GetPrivateData(refguid, pData, pSizeOfData);
+	return ProxyInterface->GetPrivateData(refguid, pSizeOfData, pData);
 }
 HRESULT STDMETHODCALLTYPE Direct3DIndexBuffer8::FreePrivateData(REFGUID refguid)
 {
-	return ProxyInterface->FreePrivateData(refguid);
+	return ProxyInterface->SetPrivateData(refguid, 0, nullptr);
 }
 DWORD STDMETHODCALLTYPE Direct3DIndexBuffer8::SetPriority(DWORD PriorityNew)
 {
-	return ProxyInterface->SetPriority(PriorityNew);
+	// TODO: Implement
+	return 0;
 }
 DWORD STDMETHODCALLTYPE Direct3DIndexBuffer8::GetPriority()
 {
-	return ProxyInterface->GetPriority();
+	// TODO: Implement
+	return 0;
 }
 void STDMETHODCALLTYPE Direct3DIndexBuffer8::PreLoad()
 {
-	ProxyInterface->PreLoad();
+	// TODO: Implement
 }
 D3DRESOURCETYPE STDMETHODCALLTYPE Direct3DIndexBuffer8::GetType()
 {
@@ -85,25 +83,16 @@ D3DRESOURCETYPE STDMETHODCALLTYPE Direct3DIndexBuffer8::GetType()
 
 HRESULT STDMETHODCALLTYPE Direct3DIndexBuffer8::Lock(UINT OffsetToLock, UINT SizeToLock, BYTE **ppbData, DWORD Flags)
 {
-	if ((Flags & D3DLOCK_DISCARD) != 0)
-	{
-		D3DINDEXBUFFER_DESC desc;
-		ProxyInterface->GetDesc(&desc);
-
-		if ((desc.Usage & D3DUSAGE_DYNAMIC) == 0 ||
-			(desc.Usage & D3DUSAGE_WRITEONLY) == 0)
-		{
-			Flags ^= D3DLOCK_DISCARD;
-		}
-	}
-
-	return ProxyInterface->Lock(OffsetToLock, SizeToLock, reinterpret_cast<void **>(ppbData), Flags);
+	// TODO: Implement
+	return E_NOTIMPL;
 }
 HRESULT STDMETHODCALLTYPE Direct3DIndexBuffer8::Unlock()
 {
-	return ProxyInterface->Unlock();
+	// TODO: Implement
+	return E_NOTIMPL;
 }
 HRESULT STDMETHODCALLTYPE Direct3DIndexBuffer8::GetDesc(D3DINDEXBUFFER_DESC *pDesc)
 {
-	return ProxyInterface->GetDesc(pDesc);
+	// TODO: Implement
+	return E_NOTIMPL;
 }

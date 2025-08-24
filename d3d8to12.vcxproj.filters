@@ -9,19 +9,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="source\d3d8to9.cpp" />
-    <ClCompile Include="source\d3d8to9_base.cpp" />
-    <ClCompile Include="source\d3d8to9_device.cpp" />
-    <ClCompile Include="source\d3d8to9_index_buffer.cpp" />
-    <ClCompile Include="source\d3d8to9_surface.cpp" />
-    <ClCompile Include="source\d3d8to9_swap_chain.cpp" />
-    <ClCompile Include="source\d3d8to9_texture.cpp" />
-    <ClCompile Include="source\d3d8to9_vertex_buffer.cpp" />
-    <ClCompile Include="source\d3d8to9_volume.cpp" />
+    <ClCompile Include="source\d3d8to12.cpp" />
+    <ClCompile Include="source\d3d8to12_base.cpp" />
+    <ClCompile Include="source\d3d8to12_device.cpp" />
+    <ClCompile Include="source\d3d8to12_index_buffer.cpp" />
+    <ClCompile Include="source\d3d8to12_surface.cpp" />
+    <ClCompile Include="source\d3d8to12_swap_chain.cpp" />
+    <ClCompile Include="source\d3d8to12_texture.cpp" />
+    <ClCompile Include="source\d3d8to12_vertex_buffer.cpp" />
+    <ClCompile Include="source\d3d8to12_volume.cpp" />
     <ClCompile Include="source\d3d8types.cpp">
-      <Filter>helpers</Filter>
-    </ClCompile>
-    <ClCompile Include="source\interface_query.cpp">
       <Filter>helpers</Filter>
     </ClCompile>
   </ItemGroup>
@@ -32,14 +29,8 @@
     <ClInclude Include="source\d3d8.hpp">
       <Filter>helpers</Filter>
     </ClInclude>
-    <ClInclude Include="source\d3d8to9.hpp" />
+    <ClInclude Include="source\d3d8to12.hpp" />
     <ClInclude Include="source\d3d8types.hpp">
-      <Filter>helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="source\d3dx9.hpp">
-      <Filter>helpers</Filter>
-    </ClInclude>
-    <ClInclude Include="source\interface_query.hpp">
       <Filter>helpers</Filter>
     </ClInclude>
   </ItemGroup>
@@ -49,8 +40,18 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="res\d3d8to9.rc">
+    <ResourceCompile Include="res\d3d8to12.rc">
       <Filter>resources</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{f221c99c-648b-488b-a869-0b44383e2fde}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="source\shaders.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

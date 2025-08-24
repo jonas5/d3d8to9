@@ -38,8 +38,8 @@
     <TargetName>d3d8</TargetName>
     <OutDir>bin\$(Configuration)\</OutDir>
     <IntDir>intermediate\$(Configuration)\</IntDir>
-    <IncludePath>$(IncludePath);$(DXSDK_DIR)\Include</IncludePath>
-    <LibraryPath>$(DXSDK_DIR)\Lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -51,7 +51,7 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ModuleDefinitionFile>res\d3d8.def</ModuleDefinitionFile>
-      <AdditionalDependencies>d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;d3dcompiler.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -64,7 +64,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;D3D8TO9NOLOG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;D3D8TO12_NOLOG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
@@ -73,35 +73,38 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <ModuleDefinitionFile>res\d3d8.def</ModuleDefinitionFile>
-      <AdditionalDependencies>d3d9.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3d12.lib;dxgi.lib;d3dcompiler.lib;dxguid.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="source\d3d8to9.cpp" />
-    <ClCompile Include="source\d3d8to9_base.cpp" />
-    <ClCompile Include="source\d3d8to9_device.cpp" />
-    <ClCompile Include="source\d3d8to9_index_buffer.cpp" />
-    <ClCompile Include="source\d3d8to9_surface.cpp" />
-    <ClCompile Include="source\d3d8to9_swap_chain.cpp" />
-    <ClCompile Include="source\d3d8to9_texture.cpp" />
-    <ClCompile Include="source\d3d8to9_vertex_buffer.cpp" />
-    <ClCompile Include="source\d3d8to9_volume.cpp" />
+    <ClCompile Include="source\d3d8to12.cpp" />
+    <ClCompile Include="source\d3d8to12_base.cpp" />
+    <ClCompile Include="source\d3d8to12_device.cpp" />
+    <ClCompile Include="source\d3d8to12_index_buffer.cpp" />
+    <ClCompile Include="source\d3d8to12_surface.cpp" />
+    <ClCompile Include="source\d3d8to12_swap_chain.cpp" />
+    <ClCompile Include="source\d3d8to12_texture.cpp" />
+    <ClCompile Include="source\d3d8to12_vertex_buffer.cpp" />
+    <ClCompile Include="source\d3d8to12_volume.cpp" />
     <ClCompile Include="source\d3d8types.cpp" />
-    <ClCompile Include="source\interface_query.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="res\resource.h" />
     <ClInclude Include="source\d3d8.hpp" />
-    <ClInclude Include="source\d3d8to9.hpp" />
+    <ClInclude Include="source\d3d8to12.hpp" />
     <ClInclude Include="source\d3d8types.hpp" />
-    <ClInclude Include="source\d3dx9.hpp" />
-    <ClInclude Include="source\interface_query.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\d3d8.def" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="res\d3d8to9.rc" />
+    <ResourceCompile Include="res\d3d8to12.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="source\shaders.hlsl">
+      <ShaderType>Effect</ShaderType>
+      <ShaderModel>5.0</ShaderModel>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
 </Project>
