@@ -26,10 +26,9 @@ void Direct3DIndexBuffer8::PreReset()
 		}
 	}
 }
-
 void Direct3DIndexBuffer8::PostReset()
 {
-	if (Desc.Pool == D3DPOOL_DEFAULT)
+	if (Desc.Pool == D3DPOOL_DEFAULT && !ProxyInterface)
 	{
 		Device->GetProxyInterface()->CreateIndexBuffer(Desc.Size, Desc.Usage, Desc.Format, Desc.Pool, &ProxyInterface, nullptr);
 	}

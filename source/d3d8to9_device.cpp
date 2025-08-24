@@ -427,10 +427,12 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateRenderTarget(UINT Width, UINT H
 
 	*ppSurface = nullptr;
 
-	Direct3DSurface8 *Surface8 = new Direct3DSurface8(this, Width, Height, Format, D3DUSAGE_RENDERTARGET, MultiSample, 0, Lockable);
+	DWORD MultisampleQuality = 0;
+
+	Direct3DSurface8 *Surface8 = new Direct3DSurface8(this, Width, Height, Format, MultiSample, MultisampleQuality, Lockable, D3DUSAGE_RENDERTARGET);
 
 	IDirect3DSurface9 *SurfaceInterface = nullptr;
-	const HRESULT hr = ProxyInterface->CreateRenderTarget(Width, Height, Format, MultiSample, 0, Lockable, &SurfaceInterface, nullptr);
+	const HRESULT hr = ProxyInterface->CreateRenderTarget(Width, Height, Format, MultiSample, MultisampleQuality, Lockable, &SurfaceInterface, nullptr);
 
 	if (FAILED(hr))
 	{
@@ -454,10 +456,12 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateDepthStencilSurface(UINT Width,
 
 	*ppSurface = nullptr;
 
-	Direct3DSurface8 *Surface8 = new Direct3DSurface8(this, Width, Height, Format, D3DUSAGE_DEPTHSTENCIL, MultiSample, 0, FALSE);
+	DWORD MultisampleQuality = 0;
+
+	Direct3DSurface8 *Surface8 = new Direct3DSurface8(this, Width, Height, Format, MultiSample, MultisampleQuality, FALSE, D3DUSAGE_DEPTHSTENCIL);
 
 	IDirect3DSurface9 *SurfaceInterface = nullptr;
-	const HRESULT hr = ProxyInterface->CreateDepthStencilSurface(Width, Height, Format, MultiSample, 0, ZBufferDiscarding, &SurfaceInterface, nullptr);
+	const HRESULT hr = ProxyInterface->CreateDepthStencilSurface(Width, Height, Format, MultiSample, MultisampleQuality, ZBufferDiscarding, &SurfaceInterface, nullptr);
 
 	if (FAILED(hr))
 	{

@@ -5,15 +5,15 @@
 
 #include "d3d8to9.hpp"
 
-Direct3DSurface8::Direct3DSurface8(Direct3DDevice8 *device, UINT Width, UINT Height, D3DFORMAT Format, DWORD Usage, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, BOOL Lockable) :
+Direct3DSurface8::Direct3DSurface8(Direct3DDevice8 *device, UINT Width, UINT Height, D3DFORMAT Format, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, BOOL Lockable, DWORD Usage) :
 	Device(device),
 	Width(Width),
 	Height(Height),
 	Format(Format),
-	Usage(Usage),
 	MultiSample(MultiSample),
 	MultisampleQuality(MultisampleQuality),
-	Lockable(Lockable)
+	Lockable(Lockable),
+	Usage(Usage)
 {
 }
 Direct3DSurface8::Direct3DSurface8(Direct3DDevice8 *device, IDirect3DSurface9 *ProxyInterface) :
@@ -22,10 +22,10 @@ Direct3DSurface8::Direct3DSurface8(Direct3DDevice8 *device, IDirect3DSurface9 *P
 	Width(0),
 	Height(0),
 	Format(D3DFMT_UNKNOWN),
-	Usage(0),
 	MultiSample(D3DMULTISAMPLE_NONE),
 	MultisampleQuality(0),
-	Lockable(FALSE)
+	Lockable(FALSE),
+	Usage(0)
 {
 	Device->ProxyAddressLookupTable->SaveAddress(this, ProxyInterface);
 }
@@ -53,10 +53,9 @@ void Direct3DSurface8::PreReset()
 		}
 	}
 }
-
 void Direct3DSurface8::PostReset()
 {
-	if (ProxyInterface == nullptr && (Usage != 0))
+	if (ProxyInterface == nullptr && Usage != 0)
 	{
 		if (Usage & D3DUSAGE_RENDERTARGET)
 		{

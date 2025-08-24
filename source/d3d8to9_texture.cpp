@@ -5,6 +5,7 @@
 
 #include "d3d8to9.hpp"
 
+// IDirect3DTexture8
 Direct3DTexture8::Direct3DTexture8(Direct3DDevice8 *Device, IDirect3DTexture9 *ProxyInterface) :
 	Device(Device), ProxyInterface(ProxyInterface)
 {
@@ -27,10 +28,9 @@ void Direct3DTexture8::PreReset()
 		}
 	}
 }
-
 void Direct3DTexture8::PostReset()
 {
-	if (Desc.Pool == D3DPOOL_DEFAULT)
+	if (Desc.Pool == D3DPOOL_DEFAULT && !ProxyInterface)
 	{
 		Device->GetProxyInterface()->CreateTexture(Desc.Width, Desc.Height, Levels, Desc.Usage, Desc.Format, Desc.Pool, &ProxyInterface, nullptr);
 	}
@@ -164,6 +164,7 @@ HRESULT STDMETHODCALLTYPE Direct3DTexture8::AddDirtyRect(const RECT *pDirtyRect)
 	return ProxyInterface->AddDirtyRect(pDirtyRect);
 }
 
+// IDirect3DCubeTexture8
 Direct3DCubeTexture8::Direct3DCubeTexture8(Direct3DDevice8 *device, IDirect3DCubeTexture9 *ProxyInterface) :
 	Device(device),
 	ProxyInterface(ProxyInterface)
@@ -187,10 +188,9 @@ void Direct3DCubeTexture8::PreReset()
 		}
 	}
 }
-
 void Direct3DCubeTexture8::PostReset()
 {
-	if (Desc.Pool == D3DPOOL_DEFAULT)
+	if (Desc.Pool == D3DPOOL_DEFAULT && !ProxyInterface)
 	{
 		Device->GetProxyInterface()->CreateCubeTexture(Desc.Width, Levels, Desc.Usage, Desc.Format, Desc.Pool, &ProxyInterface, nullptr);
 	}
@@ -324,6 +324,7 @@ HRESULT STDMETHODCALLTYPE Direct3DCubeTexture8::AddDirtyRect(D3DCUBEMAP_FACES Fa
 	return ProxyInterface->AddDirtyRect(FaceType, pDirtyRect);
 }
 
+// IDirect3DVolumeTexture8
 Direct3DVolumeTexture8::Direct3DVolumeTexture8(Direct3DDevice8 *device, IDirect3DVolumeTexture9 *ProxyInterface) :
 	Device(device),
 	ProxyInterface(ProxyInterface)
@@ -347,10 +348,9 @@ void Direct3DVolumeTexture8::PreReset()
 		}
 	}
 }
-
 void Direct3DVolumeTexture8::PostReset()
 {
-	if (Desc.Pool == D3DPOOL_DEFAULT)
+	if (Desc.Pool == D3DPOOL_DEFAULT && !ProxyInterface)
 	{
 		Device->GetProxyInterface()->CreateVolumeTexture(Desc.Width, Desc.Height, Desc.Depth, Levels, Desc.Usage, Desc.Format, Desc.Pool, &ProxyInterface, nullptr);
 	}

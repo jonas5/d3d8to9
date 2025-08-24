@@ -26,10 +26,9 @@ void Direct3DVertexBuffer8::PreReset()
 		}
 	}
 }
-
 void Direct3DVertexBuffer8::PostReset()
 {
-	if (Desc.Pool == D3DPOOL_DEFAULT)
+	if (Desc.Pool == D3DPOOL_DEFAULT && !ProxyInterface)
 	{
 		Device->GetProxyInterface()->CreateVertexBuffer(Desc.Size, Desc.Usage, Desc.FVF, Desc.Pool, &ProxyInterface, nullptr);
 	}

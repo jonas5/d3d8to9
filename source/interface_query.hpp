@@ -19,20 +19,6 @@ class Direct3DVolume8;
 class Direct3DVertexBuffer8;
 class Direct3DIndexBuffer8;
 
-class AddressLookupTableObject
-{
-public:
-	virtual ~AddressLookupTableObject() {}
-
-	void DeleteMe()
-	{
-		delete this;
-	}
-
-	virtual void PreReset() {}
-	virtual void PostReset() {}
-};
-
 class AddressLookupTable
 {
 	template <typename T>
@@ -81,20 +67,6 @@ public:
 			cache.erase(it);
 	}
 
-	void PreReset()
-	{
-		for (auto &cache : AddressCache)
-			for (auto &entry : cache)
-				entry.second->PreReset();
-	}
-
-	void PostReset()
-	{
-		for (auto &cache : AddressCache)
-			for (auto &entry : cache)
-				entry.second->PostReset();
-	}
-
 private:
 	Direct3DDevice8 *const Device;
 	std::unordered_map<void *, class AddressLookupTableObject *> AddressCache[8];
@@ -124,6 +96,17 @@ struct AddressLookupTable::AddressCacheIndex<Direct3DIndexBuffer8>
 template <>
 struct AddressLookupTable::AddressCacheIndex<Direct3DSwapChain8>
 { static constexpr UINT CacheIndex = 7; using Type9 = IDirect3DSwapChain9; };
+
+class AddressLookupTableObject
+{
+public:
+	virtual ~AddressLookupTableObject() {}
+
+	void DeleteMe()
+	{
+		delete this;
+	}
+};
 
 void GenericQueryInterface(REFIID riid, LPVOID *ppvObj, class Direct3DDevice8 *pDevice);
 
