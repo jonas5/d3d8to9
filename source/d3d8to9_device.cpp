@@ -427,13 +427,20 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateRenderTarget(UINT Width, UINT H
 
 	*ppSurface = nullptr;
 
+	Direct3DSurface8 *Surface8 = new Direct3DSurface8(this, Width, Height, Format, D3DUSAGE_RENDERTARGET, MultiSample, 0, Lockable);
+
 	IDirect3DSurface9 *SurfaceInterface = nullptr;
-
 	const HRESULT hr = ProxyInterface->CreateRenderTarget(Width, Height, Format, MultiSample, 0, Lockable, &SurfaceInterface, nullptr);
-	if (FAILED(hr))
-		return hr;
 
-	*ppSurface = ProxyAddressLookupTable->FindAddress<Direct3DSurface8>(SurfaceInterface);
+	if (FAILED(hr))
+	{
+		delete Surface8;
+		return hr;
+	}
+
+	Surface8->SetProxyInterface(SurfaceInterface);
+	ProxyAddressLookupTable->SaveAddress(Surface8, SurfaceInterface);
+	*ppSurface = Surface8;
 
 	return D3D_OK;
 }
@@ -447,13 +454,20 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateDepthStencilSurface(UINT Width,
 
 	*ppSurface = nullptr;
 
+	Direct3DSurface8 *Surface8 = new Direct3DSurface8(this, Width, Height, Format, D3DUSAGE_DEPTHSTENCIL, MultiSample, 0, FALSE);
+
 	IDirect3DSurface9 *SurfaceInterface = nullptr;
-
 	const HRESULT hr = ProxyInterface->CreateDepthStencilSurface(Width, Height, Format, MultiSample, 0, ZBufferDiscarding, &SurfaceInterface, nullptr);
-	if (FAILED(hr))
-		return hr;
 
-	*ppSurface = ProxyAddressLookupTable->FindAddress<Direct3DSurface8>(SurfaceInterface);
+	if (FAILED(hr))
+	{
+		delete Surface8;
+		return hr;
+	}
+
+	Surface8->SetProxyInterface(SurfaceInterface);
+	ProxyAddressLookupTable->SaveAddress(Surface8, SurfaceInterface);
+	*ppSurface = Surface8;
 
 	return D3D_OK;
 }

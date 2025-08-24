@@ -5,11 +5,29 @@
 
 #include "d3d8to9.hpp"
 
-Direct3DSurface8::Direct3DSurface8(Direct3DDevice8 *Device, IDirect3DSurface9 *ProxyInterface) :
-	Device(Device), ProxyInterface(ProxyInterface)
+Direct3DSurface8::Direct3DSurface8(Direct3DDevice8 *device, UINT Width, UINT Height, D3DFORMAT Format, DWORD Usage, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, BOOL Lockable) :
+	Device(device),
+	Width(Width),
+	Height(Height),
+	Format(Format),
+	Usage(Usage),
+	MultiSample(MultiSample),
+	MultisampleQuality(MultisampleQuality),
+	Lockable(Lockable)
+{
+}
+Direct3DSurface8::Direct3DSurface8(Direct3DDevice8 *device, IDirect3DSurface9 *ProxyInterface) :
+	Device(device),
+	ProxyInterface(ProxyInterface),
+	Width(0),
+	Height(0),
+	Format(D3DFMT_UNKNOWN),
+	Usage(0),
+	MultiSample(D3DMULTISAMPLE_NONE),
+	MultisampleQuality(0),
+	Lockable(FALSE)
 {
 	Device->ProxyAddressLookupTable->SaveAddress(this, ProxyInterface);
-	GetDesc(&Desc);
 }
 Direct3DSurface8::~Direct3DSurface8()
 {
@@ -17,32 +35,36 @@ Direct3DSurface8::~Direct3DSurface8()
 
 void Direct3DSurface8::PreReset()
 {
-	if (Desc.Pool == D3DPOOL_DEFAULT)
+	if (ProxyInterface != nullptr)
 	{
-		IUnknown *pContainer = nullptr;
-		if (ProxyInterface && FAILED(ProxyInterface->GetContainer(IID_IUnknown, (void**)&pContainer)))
+		D3DSURFACE_DESC desc;
+		if (SUCCEEDED(ProxyInterface->GetDesc(&desc)) && desc.Pool == D3DPOOL_DEFAULT)
 		{
-			ProxyInterface->Release();
-			ProxyInterface = nullptr;
-		}
-		if (pContainer)
-		{
-			pContainer->Release();
+			IUnknown *pContainer = nullptr;
+			if (FAILED(ProxyInterface->GetContainer(IID_IUnknown, (void**)&pContainer)))
+			{
+				ProxyInterface->Release();
+				ProxyInterface = nullptr;
+			}
+			if (pContainer)
+			{
+				pContainer->Release();
+			}
 		}
 	}
 }
 
 void Direct3DSurface8::PostReset()
 {
-	if (Desc.Pool == D3DPOOL_DEFAULT && ProxyInterface == nullptr)
+	if (ProxyInterface == nullptr && (Usage != 0))
 	{
-		if (Desc.Usage & D3DUSAGE_RENDERTARGET)
+		if (Usage & D3DUSAGE_RENDERTARGET)
 		{
-			Device->GetProxyInterface()->CreateRenderTarget(Desc.Width, Desc.Height, Desc.Format, Desc.MultiSampleType, 0, FALSE, &ProxyInterface, nullptr);
+			Device->GetProxyInterface()->CreateRenderTarget(Width, Height, Format, MultiSample, MultisampleQuality, Lockable, &ProxyInterface, nullptr);
 		}
-		else if (Desc.Usage & D3DUSAGE_DEPTHSTENCIL)
+		else if (Usage & D3DUSAGE_DEPTHSTENCIL)
 		{
-			Device->GetProxyInterface()->CreateDepthStencilSurface(Desc.Width, Desc.Height, Desc.Format, Desc.MultiSampleType, 0, TRUE, &ProxyInterface, nullptr);
+			Device->GetProxyInterface()->CreateDepthStencilSurface(Width, Height, Format, MultiSample, MultisampleQuality, Device->GetZBufferDiscarding(), &ProxyInterface, nullptr);
 		}
 	}
 }

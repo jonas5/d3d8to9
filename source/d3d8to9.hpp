@@ -57,6 +57,7 @@ public:
 	~Direct3DDevice8();
 
 	IDirect3DDevice9 *GetProxyInterface() const { return ProxyInterface; }
+	BOOL GetZBufferDiscarding() const { return ZBufferDiscarding; }
 
 	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObj) override;
 	virtual ULONG STDMETHODCALLTYPE AddRef() override;
@@ -347,10 +348,12 @@ class Direct3DSurface8 : public IDirect3DSurface8, public AddressLookupTableObje
 	Direct3DSurface8 &operator=(const Direct3DSurface8 &) = delete;
 
 public:
+	Direct3DSurface8(Direct3DDevice8 *device, UINT Width, UINT Height, D3DFORMAT Format, DWORD Usage, D3DMULTISAMPLE_TYPE MultiSample, DWORD MultisampleQuality, BOOL Lockable);
 	Direct3DSurface8(Direct3DDevice8 *device, IDirect3DSurface9 *ProxyInterface);
 	~Direct3DSurface8();
 
 	IDirect3DSurface9 *GetProxyInterface() const { return ProxyInterface; }
+	void SetProxyInterface(IDirect3DSurface9 *ProxyInterface) { this->ProxyInterface = ProxyInterface; }
 
 	virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void **ppvObj) override;
 	virtual ULONG STDMETHODCALLTYPE AddRef() override;
@@ -371,9 +374,15 @@ public:
 
 private:
 	Direct3DDevice8 *const Device;
-	IDirect3DSurface9 *ProxyInterface;
+	IDirect3DSurface9 *ProxyInterface = nullptr;
 
-	D3DSURFACE_DESC8 Desc;
+	UINT Width;
+	UINT Height;
+	D3DFORMAT Format;
+	DWORD Usage;
+	D3DMULTISAMPLE_TYPE MultiSample;
+	DWORD MultisampleQuality;
+	BOOL Lockable;
 };
 
 class Direct3DVolume8 : public IDirect3DVolume8, public AddressLookupTableObject
