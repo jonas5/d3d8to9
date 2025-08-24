@@ -9,10 +9,6 @@
 #include <assert.h>
 #include "d3dx9_fnptrs.hpp"
 
-using namespace CustomD3DX;
-
-
-
 struct VertexShaderInfo
 {
 	IDirect3DVertexShader9 *Shader = nullptr;
@@ -491,9 +487,9 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CopyRects(IDirect3DSurface8 *pSourceS
 		if (SourceDesc.Pool == D3DPOOL_MANAGED || DestinationDesc.Pool != D3DPOOL_DEFAULT)
 		{
 			hr = D3DERR_INVALIDCALL;
-			if (CustomD3DX::D3DXLoadSurfaceFromSurface != nullptr)
+			if (g_pfnD3DXLoadSurfaceFromSurface != nullptr)
 			{
-				if (SUCCEEDED(CustomD3DX::D3DXLoadSurfaceFromSurface(pDestinationSurfaceImpl->GetProxyInterface(), nullptr, &DestinationRect, pSourceSurfaceImpl->GetProxyInterface(), nullptr, &SourceRect, CustomD3DX::D3DX_CUSTOM_FILTER_NONE, 0)))
+				if (SUCCEEDED(g_pfnD3DXLoadSurfaceFromSurface(pDestinationSurfaceImpl->GetProxyInterface(), nullptr, &DestinationRect, pSourceSurfaceImpl->GetProxyInterface(), nullptr, &SourceRect, D3DX_CUSTOM_FILTER_NONE, 0)))
 				{
 					// Explicitly call AddDirtyRect on the surface
 					void* pContainer = nullptr;
@@ -903,17 +899,17 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetTexture(DWORD Stage, IDirect3DBase
 		switch (BaseTextureInterface->GetType())
 		{
 		case D3DRTYPE_TEXTURE:
-			BaseTextureInterface->QueryInterface(IID_PPV_ARGS(&TextureInterface));
+			BaseTextureInterface->QueryInterface(IID_IDirect3DTexture9, reinterpret_cast<void**>(&TextureInterface));
 			*ppTexture = ProxyAddressLookupTable->FindAddress<Direct3DTexture8>(TextureInterface);
 			BaseTextureInterface->Release();
 			break;
 		case D3DRTYPE_VOLUMETEXTURE:
-			BaseTextureInterface->QueryInterface(IID_PPV_ARGS(&VolumeTextureInterface));
+			BaseTextureInterface->QueryInterface(IID_IDirect3DVolumeTexture9, reinterpret_cast<void**>(&VolumeTextureInterface));
 			*ppTexture = ProxyAddressLookupTable->FindAddress<Direct3DVolumeTexture8>(VolumeTextureInterface);
 			BaseTextureInterface->Release();
 			break;
 		case D3DRTYPE_CUBETEXTURE:
-			BaseTextureInterface->QueryInterface(IID_PPV_ARGS(&CubeTextureInterface));
+			BaseTextureInterface->QueryInterface(IID_IDirect3DCubeTexture9, reinterpret_cast<void**>(&CubeTextureInterface));
 			*ppTexture = ProxyAddressLookupTable->FindAddress<Direct3DCubeTexture8>(CubeTextureInterface);
 			BaseTextureInterface->Release();
 			break;
@@ -1333,11 +1329,11 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 			return D3DERR_INVALIDCALL;
 		}
 
-		CustomD3DX::ID3DXBuffer* Disassembly = nullptr, *Assembly = nullptr, *ErrorBuffer = nullptr;
+		ID3DXBuffer* Disassembly = nullptr, *Assembly = nullptr, *ErrorBuffer = nullptr;
 
-		if (CustomD3DX::D3DXDisassembleShader != nullptr)
+		if (g_pfnD3DXDisassembleShader != nullptr)
 		{
-			hr = CustomD3DX::D3DXDisassembleShader(pFunction, FALSE, nullptr, &Disassembly);
+			hr = g_pfnD3DXDisassembleShader(pFunction, FALSE, nullptr, &Disassembly);
 		}
 		else
 		{
@@ -1512,9 +1508,9 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 		LOG << "> Dumping translated shader assembly:" << std::endl << std::endl << SourceCode << std::endl;
 #endif
 
-		if (CustomD3DX::D3DXAssembleShader != nullptr)
+		if (g_pfnD3DXAssembleShader != nullptr)
 		{
-			hr = CustomD3DX::D3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
+			hr = g_pfnD3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
 		}
 		else
 		{
@@ -1802,12 +1798,12 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 		return D3DERR_INVALIDCALL;
 	}
 
-	CustomD3DX::ID3DXBuffer* Disassembly = nullptr, *Assembly = nullptr, *ErrorBuffer = nullptr;
+	ID3DXBuffer* Disassembly = nullptr, *Assembly = nullptr, *ErrorBuffer = nullptr;
 
 	HRESULT hr = D3DERR_INVALIDCALL;
 
-	if (CustomD3DX::D3DXDisassembleShader != nullptr)
-		hr = CustomD3DX::D3DXDisassembleShader(pFunction, FALSE, nullptr, &Disassembly);
+	if (g_pfnD3DXDisassembleShader != nullptr)
+		hr = g_pfnD3DXDisassembleShader(pFunction, FALSE, nullptr, &Disassembly);
 
 	if (FAILED(hr))
 	{
@@ -2135,10 +2131,10 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 		NewSourceCode.insert(PhasePosition, "    phase\n");
 
 		// If no errors were encountered then check if code assembles
-		if (!ConvertError && CustomD3DX::D3DXAssembleShader != nullptr)
+		if (!ConvertError && g_pfnD3DXAssembleShader != nullptr)
 		{
 			// Test if ps_1_4 assembles
-			if (SUCCEEDED(CustomD3DX::D3DXAssembleShader(NewSourceCode.data(), static_cast<UINT>(NewSourceCode.size()), nullptr, nullptr, 0, &Assembly, &ErrorBuffer)))
+			if (SUCCEEDED(g_pfnD3DXAssembleShader(NewSourceCode.data(), static_cast<UINT>(NewSourceCode.size()), nullptr, nullptr, 0, &Assembly, &ErrorBuffer)))
 			{
 				SourceCode = NewSourceCode;
 				Assembly->Release();
@@ -2181,9 +2177,9 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 	LOG << "> Dumping translated shader assembly:" << std::endl << std::endl << SourceCode << std::endl;
 #endif
 
-	if (CustomD3DX::D3DXAssembleShader != nullptr)
+	if (g_pfnD3DXAssembleShader != nullptr)
 	{
-		hr = CustomD3DX::D3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
+		hr = g_pfnD3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
 	}
 	else
 	{

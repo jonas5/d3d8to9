@@ -38,6 +38,7 @@ target_compile_definitions(d3d8to9 PRIVATE
 
 # Link system DirectX libraries
 target_link_libraries(d3d8to9 PRIVATE
+    dxguid
     d3d9
     d3dx9
 )
