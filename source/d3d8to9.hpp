@@ -447,5 +447,5 @@ private:
 #include <fstream>
 
 #ifndef D3D8TO9NOLOG
-extern std::ofstream LOG;
+std::ofstream& GetLogStream();
 #endif

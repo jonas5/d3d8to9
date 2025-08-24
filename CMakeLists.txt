@@ -1,12 +1,8 @@
-cmake_minimum_required(VERSION 3.15)
-project(d3d8to9 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.12)
 
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+project(d3d8to9 CXX)
 
-# Define the library target
-add_library(d3d8to9 SHARED
+set(SRCS
   source/d3d8.hpp
   source/d3d8to9.cpp
   source/d3d8to9.hpp
@@ -26,24 +22,31 @@ add_library(d3d8to9 SHARED
   res/d3d8to9.rc
 )
 
-# Include directories
-target_include_directories(d3d8to9 PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+set(CMAKE_CXX_STANDARD 17)
+
+option(D3D8TO9_STATIC "Build as a static library" OFF)
+
+if(D3D8TO9_STATIC)
+  add_library(d3d8to9 STATIC ${SRCS})
+else()
+  add_library(d3d8to9 SHARED ${SRCS})
+  set_target_properties(d3d8to9 PROPERTIES PREFIX "")
+  set_target_properties(d3d8to9 PROPERTIES OUTPUT_NAME "d3d8")
+endif()
+
+target_compile_definitions(d3d8to9 PUBLIC
+  $<$<CONFIG:Debug>:D3D_DEBUG_INFO;_DEBUG>
+  $<$<CONFIG:RelWithDebInfo>:D3D_DEBUG_INFO;_DEBUG>
+  $<$<CONFIG:Release>:D3D8TO9NOLOG>
+  $<$<CONFIG:MinSizeRel>:D3D8TO9NOLOG>
 )
 
-# Compiler definitions
-target_compile_definitions(d3d8to9 PRIVATE
-    __uuidof=__mingw_uuidof
-)
+if(MSVC)
+  target_compile_options(d3d8to9 PRIVATE /W3)
+  target_link_options(d3d8to9 PRIVATE /DEF:${CMAKE_CURRENT_SOURCE_DIR}/res/d3d8.def)
+else()
+  target_compile_options(d3d8to9 PRIVATE -Wall -Wno-delete-non-virtual-dtor -Wno-unknown-pragmas)
+  target_link_options(d3d8to9 PRIVATE -Wl,--enable-stdcall-fixup ${CMAKE_CURRENT_SOURCE_DIR}/res/d3d8.def)
+endif()
 
-# Link system DirectX libraries
-target_link_libraries(d3d8to9 PRIVATE
-    d3d9
-    d3dx9
-)
-
-# Set output name
-set_target_properties(d3d8to9 PROPERTIES OUTPUT_NAME "d3d8")
-
-# Optional: install target
-install(TARGETS d3d8to9 DESTINATION bin)
+target_link_libraries(d3d8to9 d3d9)

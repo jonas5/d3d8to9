@@ -7,11 +7,6 @@
 #include "d3d8to9.hpp"
 #include <regex>
 #include <assert.h>
-#include "d3dx9_fnptrs.hpp"
-
-using namespace CustomD3DX;
-
-
 
 struct VertexShaderInfo
 {
@@ -99,7 +94,11 @@ ULONG STDMETHODCALLTYPE Direct3DDevice8::Release()
 
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::TestCooperativeLevel()
 {
-	return ProxyInterface->TestCooperativeLevel();
+	const HRESULT hr = ProxyInterface->TestCooperativeLevel();
+#ifndef D3D8TO9NOLOG
+	GetLogStream() << "IDirect3DDevice8::TestCooperativeLevel() -> " << std::hex << hr << std::dec << std::endl;
+#endif
+	return hr;
 }
 UINT STDMETHODCALLTYPE Direct3DDevice8::GetAvailableTextureMem()
 {
@@ -163,7 +162,7 @@ BOOL STDMETHODCALLTYPE Direct3DDevice8::ShowCursor(BOOL bShow)
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateAdditionalSwapChain(D3DPRESENT_PARAMETERS8 *pPresentationParameters, IDirect3DSwapChain8 **ppSwapChain)
 {
 #ifndef D3D8TO9NOLOG
-	LOG << "Redirecting '" << "IDirect3DDevice8::CreateAdditionalSwapChain" << "(" << this << ", " << pPresentationParameters << ", " << ppSwapChain << ")' ..." << std::endl;
+	GetLogStream() << "Redirecting '" << "IDirect3DDevice8::CreateAdditionalSwapChain" << "(" << this << ", " << pPresentationParameters << ", " << ppSwapChain << ")' ..." << std::endl;
 #endif
 
 	if (pPresentationParameters == nullptr || ppSwapChain == nullptr)
@@ -187,11 +186,13 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateAdditionalSwapChain(D3DPRESENT_
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::Reset(D3DPRESENT_PARAMETERS8 *pPresentationParameters)
 {
 #ifndef D3D8TO9NOLOG
-	LOG << "Redirecting '" << "IDirect3DDevice8::Reset" << "(" << this << ", " << pPresentationParameters << ")' ..." << std::endl;
+	GetLogStream() << "Redirecting '" << "IDirect3DDevice8::Reset" << "(" << this << ", " << pPresentationParameters << ")' ..." << std::endl;
 #endif
 
 	if (pPresentationParameters == nullptr)
 		return D3DERR_INVALIDCALL;
+
+	ProxyInterface->SetDepthStencilSurface(nullptr);
 
 	if (pCurrentRenderTarget != nullptr)
 	{
@@ -224,7 +225,17 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::Present(const RECT *pSourceRect, cons
 {
 	UNREFERENCED_PARAMETER(pDirtyRegion);
 
-	return ProxyInterface->Present(pSourceRect, pDestRect, hDestWindowOverride, nullptr);
+#ifndef D3D8TO9NOLOG
+	GetLogStream() << "IDirect3DDevice8::Present()" << std::endl;
+#endif
+	const HRESULT hr = ProxyInterface->Present(pSourceRect, pDestRect, hDestWindowOverride, nullptr);
+#ifndef D3D8TO9NOLOG
+	if (FAILED(hr))
+	{
+		GetLogStream() << " > Present failed with error code " << std::hex << hr << std::dec << "!" << std::endl;
+	}
+#endif
+	return hr;
 }
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetBackBuffer(UINT iBackBuffer, D3DBACKBUFFER_TYPE Type, IDirect3DSurface8 **ppBackBuffer)
 {
@@ -408,7 +419,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateDepthStencilSurface(UINT Width,
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateImageSurface(UINT Width, UINT Height, D3DFORMAT Format, IDirect3DSurface8 **ppSurface)
 {
 #ifndef D3D8TO9NOLOG
-	LOG << "Redirecting '" << "IDirect3DDevice8::CreateImageSurface" << "(" << this << ", " << Width << ", " << Height << ", " << Format << ", " << ppSurface << ")' ..." << std::endl;
+	GetLogStream() << "Redirecting '" << "IDirect3DDevice8::CreateImageSurface" << "(" << this << ", " << Width << ", " << Height << ", " << Format << ", " << ppSurface << ")' ..." << std::endl;
 #endif
 
 	if (ppSurface == nullptr)
@@ -428,7 +439,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateImageSurface(UINT Width, UINT H
 	if (FAILED(hr) && FAILED(ProxyInterface->CreateOffscreenPlainSurface(Width, Height, Format, D3DPOOL_SCRATCH, &SurfaceInterface, nullptr)))
 	{
 #ifndef D3D8TO9NOLOG
-		LOG << "> 'IDirect3DDevice9::CreateOffscreenPlainSurface' failed with error code " << std::hex << hr << std::dec << "!" << std::endl;
+		GetLogStream() << "> 'IDirect3DDevice9::CreateOffscreenPlainSurface' failed with error code " << std::hex << hr << std::dec << "!" << std::endl;
 #endif
 		return hr;
 	}
@@ -493,7 +504,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CopyRects(IDirect3DSurface8 *pSourceS
 			hr = D3DERR_INVALIDCALL;
 			if (D3DXLoadSurfaceFromSurface != nullptr)
 			{
-				if (SUCCEEDED(D3DXLoadSurfaceFromSurface(pDestinationSurfaceImpl->GetProxyInterface(), nullptr, &DestinationRect, pSourceSurfaceImpl->GetProxyInterface(), nullptr, &SourceRect, CustomD3DX::D3DX_FILTER_NONE, 0)))
+				if (SUCCEEDED(D3DXLoadSurfaceFromSurface(pDestinationSurfaceImpl->GetProxyInterface(), nullptr, &DestinationRect, pSourceSurfaceImpl->GetProxyInterface(), nullptr, &SourceRect, D3DX_FILTER_NONE, 0)))
 				{
 					// Explicitly call AddDirtyRect on the surface
 					void *pContainer = nullptr;
@@ -521,7 +532,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CopyRects(IDirect3DSurface8 *pSourceS
 		if (FAILED(hr))
 		{
 #ifndef D3D8TO9NOLOG
-			LOG << "Failed to translate 'IDirect3DDevice8::CopyRects' call from '[" << SourceDesc.Width << "x" << SourceDesc.Height << ", " << SourceDesc.Format << ", " << SourceDesc.MultiSampleType << ", " << SourceDesc.Usage << ", " << SourceDesc.Pool << "]' to '[" << DestinationDesc.Width << "x" << DestinationDesc.Height << ", " << DestinationDesc.Format << ", " << DestinationDesc.MultiSampleType << ", " << DestinationDesc.Usage << ", " << DestinationDesc.Pool << "]'!" << std::endl;
+			GetLogStream() << "Failed to translate 'IDirect3DDevice8::CopyRects' call from '[" << SourceDesc.Width << "x" << SourceDesc.Height << ", " << SourceDesc.Format << ", " << SourceDesc.MultiSampleType << ", " << SourceDesc.Usage << ", " << SourceDesc.Pool << "]' to '[" << DestinationDesc.Width << "x" << DestinationDesc.Height << ", " << DestinationDesc.Format << ", " << DestinationDesc.MultiSampleType << ", " << DestinationDesc.Usage << ", " << DestinationDesc.Pool << "]'!" << std::endl;
 #endif
 			break;
 		}
@@ -630,6 +641,9 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::BeginScene()
 }
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::EndScene()
 {
+#ifndef D3D8TO9NOLOG
+	GetLogStream() << "IDirect3DDevice8::EndScene()" << std::endl;
+#endif
 	return ProxyInterface->EndScene();
 }
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::Clear(DWORD Count, const D3DRECT *pRects, DWORD Flags, D3DCOLOR Color, float Z, DWORD Stencil)
@@ -857,7 +871,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::DeleteStateBlock(DWORD Token)
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateStateBlock(D3DSTATEBLOCKTYPE Type, DWORD *pToken)
 {
 #ifndef D3D8TO9NOLOG
-	LOG << "Redirecting '" << "IDirect3DDevice8::CreateStateBlock" << "(" << Type << ", " << pToken << ")' ..." << std::endl;
+	GetLogStream() << "Redirecting '" << "IDirect3DDevice8::CreateStateBlock" << "(" << Type << ", " << pToken << ")' ..." << std::endl;
 #endif
 
 	if (pToken == nullptr)
@@ -1014,7 +1028,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::ValidateDevice(DWORD *pNumPasses)
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetInfo(DWORD DevInfoID, void *pDevInfoStruct, DWORD DevInfoStructSize)
 {
 #ifndef D3D8TO9NOLOG
-	LOG << "Redirecting '" << "IDirect3DDevice8::GetInfo" << "(" << this << ", " << DevInfoID << ", " << pDevInfoStruct << ", " << DevInfoStructSize << ")' ..." << std::endl;
+	GetLogStream() << "Redirecting '" << "IDirect3DDevice8::GetInfo" << "(" << this << ", " << DevInfoID << ", " << pDevInfoStruct << ", " << DevInfoStructSize << ")' ..." << std::endl;
 #endif
 
 	if (pDevInfoStruct == nullptr || DevInfoStructSize == 0)
@@ -1110,12 +1124,18 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetCurrentTexturePalette(UINT *pPalet
 }
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::DrawPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT StartVertex, UINT PrimitiveCount)
 {
+#ifndef D3D8TO9NOLOG
+	GetLogStream() << "IDirect3DDevice8::DrawPrimitive(" << PrimitiveType << ", " << StartVertex << ", " << PrimitiveCount << ")" << std::endl;
+#endif
 	ApplyClipPlanes();
 	ProxyInterface->DrawPrimitive(PrimitiveType, StartVertex, PrimitiveCount);
 	return D3D_OK;
 }
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::DrawIndexedPrimitive(D3DPRIMITIVETYPE PrimitiveType, UINT MinIndex, UINT NumVertices, UINT StartIndex, UINT PrimitiveCount)
 {
+#ifndef D3D8TO9NOLOG
+	GetLogStream() << "IDirect3DDevice8::DrawIndexedPrimitive(" << PrimitiveType << ", " << MinIndex << ", " << NumVertices << ", " << StartIndex << ", " << PrimitiveCount << ")" << std::endl;
+#endif
 	ApplyClipPlanes();
 	ProxyInterface->DrawIndexedPrimitive(PrimitiveType, CurrentBaseVertexIndex, MinIndex, NumVertices, StartIndex, PrimitiveCount);
 	return D3D_OK;
@@ -1145,7 +1165,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 	UNREFERENCED_PARAMETER(Usage);
 
 #ifndef D3D8TO9NOLOG
-	LOG << "Redirecting '" << "IDirect3DDevice8::CreateVertexShader" << "(" << this << ", " << pDeclaration << ", " << pFunction << ", " << pHandle << ", " << Usage << ")' ..." << std::endl;
+	GetLogStream() << "Redirecting '" << "IDirect3DDevice8::CreateVertexShader" << "(" << this << ", " << pDeclaration << ", " << pFunction << ", " << pHandle << ", " << Usage << ")' ..." << std::endl;
 #endif
 
 	if (pDeclaration == nullptr || pHandle == nullptr)
@@ -1161,7 +1181,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 	D3DVERTEXELEMENT9 VertexElements[ElementLimit];
 
 #ifndef D3D8TO9NOLOG
-	LOG << "> Translating vertex declaration ..." << std::endl;
+	GetLogStream() << "> Translating vertex declaration ..." << std::endl;
 #endif
 
 	static const BYTE DeclTypes[][2] =
@@ -1303,7 +1323,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 		else
 		{
 #ifndef D3D8TO9NOLOG
-			LOG << "> Failed because token type '" << TokenType << "' is not supported!" << std::endl;
+			GetLogStream() << "> Failed because token type '" << TokenType << "' is not supported!" << std::endl;
 #endif
 
 			return D3DERR_INVALIDCALL;
@@ -1321,13 +1341,13 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 	if (pFunction != nullptr)
 	{
 #ifndef D3D8TO9NOLOG
-		LOG << "> Disassembling shader and translating assembly to Direct3D 9 compatible code ..." << std::endl;
+		GetLogStream() << "> Disassembling shader and translating assembly to Direct3D 9 compatible code ..." << std::endl;
 #endif
 
 		if (*pFunction < D3DVS_VERSION(1, 0) || *pFunction > D3DVS_VERSION(1, 1))
 		{
 #ifndef D3D8TO9NOLOG
-			LOG << "> Failed because of version mismatch ('" << std::showbase << std::hex << *pFunction << std::dec << std::noshowbase << "')! Only 'vs_1_x' shaders are supported." << std::endl;
+			GetLogStream() << "> Failed because of version mismatch ('" << std::showbase << std::hex << *pFunction << std::dec << std::noshowbase << "')! Only 'vs_1_x' shaders are supported." << std::endl;
 #endif
 
 			return D3DERR_INVALIDCALL;
@@ -1347,7 +1367,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 		if (FAILED(hr))
 		{
 #ifndef D3D8TO9NOLOG
-			LOG << "> Failed to disassemble shader with error code " << std::hex << hr << std::dec << "!" << std::endl;
+			GetLogStream() << "> Failed to disassemble shader with error code " << std::hex << hr << std::dec << "!" << std::endl;
 #endif
 
 			return hr;
@@ -1356,7 +1376,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 		std::string SourceCode(static_cast<const char *>(Disassembly->GetBufferPointer()), Disassembly->GetBufferSize() - 1);
 
 #ifndef D3D8TO9NOLOG
-		LOG << "> Dumping original shader assembly:" << std::endl << std::endl << SourceCode << std::endl;
+		GetLogStream() << "> Dumping original shader assembly:" << std::endl << std::endl << SourceCode << std::endl;
 #endif
 
 		const size_t VersionPosition = SourceCode.find("vs_1_");
@@ -1366,7 +1386,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 		if (SourceCode.at(VersionPosition + 5) == '0')
 		{
 #ifndef D3D8TO9NOLOG
-			LOG << "> Replacing version 'vs_1_0' with 'vs_1_1' ..." << std::endl;
+			GetLogStream() << "> Replacing version 'vs_1_0' with 'vs_1_1' ..." << std::endl;
 #endif
 
 			SourceCode.replace(VersionPosition, 6, "vs_1_1");
@@ -1509,12 +1529,12 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 		}
 
 #ifndef D3D8TO9NOLOG
-		LOG << "> Dumping translated shader assembly:" << std::endl << std::endl << SourceCode << std::endl;
+		GetLogStream() << "> Dumping translated shader assembly:" << std::endl << std::endl << SourceCode << std::endl;
 #endif
 
-		if (CustomD3DX::D3DXAssembleShader != nullptr)
+		if (D3DXAssembleShader != nullptr)
 		{
-			hr = CustomD3DX::D3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
+			hr = D3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
 		}
 		else
 		{
@@ -1528,14 +1548,14 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 			if (ErrorBuffer != nullptr)
 			{
 #ifndef D3D8TO9NOLOG
-				LOG << "> Failed to reassemble shader:" << std::endl << std::endl << static_cast<const char *>(ErrorBuffer->GetBufferPointer()) << std::endl;
+				GetLogStream() << "> Failed to reassemble shader:" << std::endl << std::endl << static_cast<const char *>(ErrorBuffer->GetBufferPointer()) << std::endl;
 #endif
 				ErrorBuffer->Release();
 			}
 			else
 			{
 #ifndef D3D8TO9NOLOG
-				LOG << "> Failed to reassemble shader with error code " << std::hex << hr << std::dec << "!" << std::endl;
+				GetLogStream() << "> Failed to reassemble shader with error code " << std::hex << hr << std::dec << "!" << std::endl;
 #endif
 			}
 
@@ -1578,7 +1598,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 		else
 		{
 #ifndef D3D8TO9NOLOG
-			LOG << "> 'IDirect3DDevice9::CreateVertexDeclaration' failed with error code " << std::hex << hr << std::dec << "!" << std::endl;
+			GetLogStream() << "> 'IDirect3DDevice9::CreateVertexDeclaration' failed with error code " << std::hex << hr << std::dec << "!" << std::endl;
 #endif
 			if (ShaderInfo->Shader != nullptr) 
 			{
@@ -1589,7 +1609,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreateVertexShader(const DWORD *pDecl
 	else
 	{
 #ifndef D3D8TO9NOLOG
-		LOG << "> 'IDirect3DDevice9::CreateVertexShader' failed with error code " << std::hex << hr << std::dec << "!" << std::endl;
+		GetLogStream() << "> 'IDirect3DDevice9::CreateVertexShader' failed with error code " << std::hex << hr << std::dec << "!" << std::endl;
 #endif
 	}
 
@@ -1687,8 +1707,8 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetVertexShaderDeclaration(DWORD Hand
 	UNREFERENCED_PARAMETER(pSizeOfData);
 
 #ifndef D3D8TO9NOLOG
-	LOG << "Redirecting '" << "IDirect3DDevice8::GetVertexShaderDeclaration" << "(" << this << ", " << Handle << ", " << pData << ", " << pSizeOfData << ")' ..." << std::endl;
-	LOG << "> 'IDirect3DDevice8::GetVertexShaderDeclaration' is not implemented!" << std::endl;
+	GetLogStream() << "Redirecting '" << "IDirect3DDevice8::GetVertexShaderDeclaration" << "(" << this << ", " << Handle << ", " << pData << ", " << pSizeOfData << ")' ..." << std::endl;
+	GetLogStream() << "> 'IDirect3DDevice8::GetVertexShaderDeclaration' is not implemented!" << std::endl;
 #endif
 
 	return D3DERR_INVALIDCALL;
@@ -1696,7 +1716,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetVertexShaderDeclaration(DWORD Hand
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetVertexShaderFunction(DWORD Handle, void *pData, DWORD *pSizeOfData)
 {
 #ifndef D3D8TO9NOLOG
-	LOG << "Redirecting '" << "IDirect3DDevice8::GetVertexShaderFunction" << "(" << this << ", " << Handle << ", " << pData << ", " << pSizeOfData << ")' ..." << std::endl;
+	GetLogStream() << "Redirecting '" << "IDirect3DDevice8::GetVertexShaderFunction" << "(" << this << ", " << Handle << ", " << pData << ", " << pSizeOfData << ")' ..." << std::endl;
 #endif
 
 	if ((Handle & 0x80000000) == 0)
@@ -1709,7 +1729,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetVertexShaderFunction(DWORD Handle,
 		return D3DERR_INVALIDCALL;
 
 #ifndef D3D8TO9NOLOG
-	LOG << "> Returning translated shader byte code." << std::endl;
+	GetLogStream() << "> Returning translated shader byte code." << std::endl;
 #endif
 
 	return VertexShaderInterface->GetFunction(pData, reinterpret_cast<UINT *>(pSizeOfData));
@@ -1782,7 +1802,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetIndices(IDirect3DIndexBuffer8 **pp
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunction, DWORD *pHandle)
 {
 #ifndef D3D8TO9NOLOG
-	LOG << "Redirecting '" << "IDirect3DDevice8::CreatePixelShader" << "(" << this << ", " << pFunction << ", " << pHandle << ")' ..." << std::endl;
+	GetLogStream() << "Redirecting '" << "IDirect3DDevice8::CreatePixelShader" << "(" << this << ", " << pFunction << ", " << pHandle << ")' ..." << std::endl;
 #endif
 
 	if (pFunction == nullptr || pHandle == nullptr)
@@ -1791,13 +1811,13 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 	*pHandle = 0;
 
 #ifndef D3D8TO9NOLOG
-	LOG << "> Disassembling shader and translating assembly to Direct3D 9 compatible code ..." << std::endl;
+	GetLogStream() << "> Disassembling shader and translating assembly to Direct3D 9 compatible code ..." << std::endl;
 #endif
 
 	if (*pFunction < D3DPS_VERSION(1, 0) || *pFunction > D3DPS_VERSION(1, 4))
 	{
 #ifndef D3D8TO9NOLOG
-		LOG << "> Failed because of version mismatch ('" << std::showbase << std::hex << *pFunction << std::dec << std::noshowbase << "')! Only 'ps_1_x' shaders are supported." << std::endl;
+		GetLogStream() << "> Failed because of version mismatch ('" << std::showbase << std::hex << *pFunction << std::dec << std::noshowbase << "')! Only 'ps_1_x' shaders are supported." << std::endl;
 #endif
 		return D3DERR_INVALIDCALL;
 	}
@@ -1812,7 +1832,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 	if (FAILED(hr))
 	{
 #ifndef D3D8TO9NOLOG
-		LOG << "> Failed to disassemble shader with error code " << std::hex << hr << std::dec << "!" << std::endl;
+		GetLogStream() << "> Failed to disassemble shader with error code " << std::hex << hr << std::dec << "!" << std::endl;
 #endif
 		return hr;
 	}
@@ -1825,7 +1845,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 	if (SourceCode.at(VersionPosition + 5) == '0')
 	{
 #ifndef D3D8TO9NOLOG
-		LOG << "> Replacing version 'ps_1_0' with 'ps_1_1' ..." << std::endl;
+		GetLogStream() << "> Replacing version 'ps_1_0' with 'ps_1_1' ..." << std::endl;
 #endif
 
 		SourceCode.replace(VersionPosition, 6, "ps_1_1");
@@ -2135,10 +2155,10 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 		NewSourceCode.insert(PhasePosition, "    phase\n");
 
 		// If no errors were encountered then check if code assembles
-		if (!ConvertError && CustomD3DX::D3DXAssembleShader != nullptr)
+		if (!ConvertError && D3DXAssembleShader != nullptr)
 		{
 			// Test if ps_1_4 assembles
-			if (SUCCEEDED(CustomD3DX::D3DXAssembleShader(NewSourceCode.data(), static_cast<UINT>(NewSourceCode.size()), nullptr, nullptr, 0, &Assembly, &ErrorBuffer)))
+			if (SUCCEEDED(D3DXAssembleShader(NewSourceCode.data(), static_cast<UINT>(NewSourceCode.size()), nullptr, nullptr, 0, &Assembly, &ErrorBuffer)))
 			{
 				SourceCode = NewSourceCode;
 				Assembly->Release();
@@ -2147,13 +2167,13 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 			else
 			{
 #ifndef D3D8TO9NOLOG
-				LOG << "> Failed to convert shader to ps_1_4" << std::endl;
-				LOG << "> Dumping translated shader assembly:" << std::endl << std::endl << NewSourceCode << std::endl;
+				GetLogStream() << "> Failed to convert shader to ps_1_4" << std::endl;
+				GetLogStream() << "> Dumping translated shader assembly:" << std::endl << std::endl << NewSourceCode << std::endl;
 #endif
 				if (ErrorBuffer != nullptr)
 				{
 #ifndef D3D8TO9NOLOG
-					LOG << "> Failed to reassemble shader:" << std::endl << std::endl << static_cast<const char*>(ErrorBuffer->GetBufferPointer()) << std::endl;
+					GetLogStream() << "> Failed to reassemble shader:" << std::endl << std::endl << static_cast<const char*>(ErrorBuffer->GetBufferPointer()) << std::endl;
 #endif
 					ErrorBuffer->Release();
 					ErrorBuffer = nullptr;
@@ -2178,12 +2198,12 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 		"$2 /* removed modifier $1 */");
 
 #ifndef D3D8TO9NOLOG
-	LOG << "> Dumping translated shader assembly:" << std::endl << std::endl << SourceCode << std::endl;
+	GetLogStream() << "> Dumping translated shader assembly:" << std::endl << std::endl << SourceCode << std::endl;
 #endif
 
-	if (CustomD3DX::D3DXAssembleShader != nullptr)
+	if (D3DXAssembleShader != nullptr)
 	{
-		hr = CustomD3DX::D3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
+		hr = D3DXAssembleShader(SourceCode.data(), static_cast<UINT>(SourceCode.size()), nullptr, nullptr, D3DXASM_FLAGS, &Assembly, &ErrorBuffer);
 	}
 	else
 	{
@@ -2197,14 +2217,14 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 		if (ErrorBuffer != nullptr)
 		{
 #ifndef D3D8TO9NOLOG
-			LOG << "> Failed to reassemble shader:" << std::endl << std::endl << static_cast<const char *>(ErrorBuffer->GetBufferPointer()) << std::endl;
+			GetLogStream() << "> Failed to reassemble shader:" << std::endl << std::endl << static_cast<const char *>(ErrorBuffer->GetBufferPointer()) << std::endl;
 #endif
 			ErrorBuffer->Release();
 		}
 		else
 		{
 #ifndef D3D8TO9NOLOG
-			LOG << "> Failed to reassemble shader with error code " << std::hex << hr << std::dec << "!" << std::endl;
+			GetLogStream() << "> Failed to reassemble shader with error code " << std::hex << hr << std::dec << "!" << std::endl;
 #endif
 		}
 
@@ -2218,7 +2238,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::CreatePixelShader(const DWORD *pFunct
 	if (FAILED(hr))
 	{
 #ifndef D3D8TO9NOLOG
-		LOG << "> 'IDirect3DDevice9::CreatePixelShader' failed with error code " << std::hex << hr << std::dec << "!" << std::endl;
+		GetLogStream() << "> 'IDirect3DDevice9::CreatePixelShader' failed with error code " << std::hex << hr << std::dec << "!" << std::endl;
 #endif
 	}
 	else
@@ -2273,7 +2293,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetPixelShaderConstant(DWORD Register
 HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetPixelShaderFunction(DWORD Handle, void *pData, DWORD *pSizeOfData)
 {
 #ifndef D3D8TO9NOLOG
-	LOG << "Redirecting '" << "IDirect3DDevice8::GetPixelShaderFunction" << "(" << this << ", " << Handle << ", " << pData << ", " << pSizeOfData << ")' ..." << std::endl;
+	GetLogStream() << "Redirecting '" << "IDirect3DDevice8::GetPixelShaderFunction" << "(" << this << ", " << Handle << ", " << pData << ", " << pSizeOfData << ")' ..." << std::endl;
 #endif
 
 	if (Handle == 0)
@@ -2282,7 +2302,7 @@ HRESULT STDMETHODCALLTYPE Direct3DDevice8::GetPixelShaderFunction(DWORD Handle, 
 	IDirect3DPixelShader9 *const PixelShaderInterface = reinterpret_cast<IDirect3DPixelShader9 *>(Handle);
 
 #ifndef D3D8TO9NOLOG
-	LOG << "> Returning translated shader byte code." << std::endl;
+	GetLogStream() << "> Returning translated shader byte code." << std::endl;
 #endif
 
 	return PixelShaderInterface->GetFunction(pData, reinterpret_cast<UINT *>(pSizeOfData));
